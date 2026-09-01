@@ -633,5 +633,8 @@ input[type="range"]:disabled::-webkit-slider-thumb { background: var(--fog); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * { transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  /* The universal selector skips pseudo-elements, so name them too. */
+  *,
+  *::before,
+  *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
