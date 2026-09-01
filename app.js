@@ -54,11 +54,13 @@ const SYSTEM_FONTS = {
 const textMeasureContext = document.createElement("canvas").getContext("2d");
 const selected = new Set();
 const history = [];
+const ARROW_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
 let pointerAction = null;
 let nextId = 1;
 let nextGroupId = 1;
 let historyIndex = -1;
+let keyboardNudgePending = false;
 let toastTimer;
 
 function svgElement(name, attributes = {}) {
@@ -337,6 +339,7 @@ function rectanglesIntersect(first, second) {
 
 stage.addEventListener("pointerdown", (event) => {
   if (event.button !== 0) return;
+  commitKeyboardNudge();
   const object = event.target.closest?.("[data-id]");
   const point = clientToStage(event);
 
@@ -359,6 +362,7 @@ stage.addEventListener("pointerdown", (event) => {
     return;
   }
 
+  if (isTextEditingTarget(document.activeElement)) document.activeElement.blur();
   event.preventDefault();
   const objectSelection = groupedObjects([object]);
   if (event.shiftKey || event.metaKey || event.ctrlKey) {
@@ -490,6 +494,11 @@ function moveSelection(dx, dy) {
     updateTransform(object);
   });
   drawSelection();
+}
+
+function commitKeyboardNudge() {
+  if (!keyboardNudgePending) return;
+  keyboardNudgePending = false;
   commitHistory();
 }
 
@@ -501,6 +510,8 @@ window.addEventListener("keydown", (event) => {
   if (isTextEditingTarget(document.activeElement)) return;
   const commandKey = event.metaKey || event.ctrlKey;
   const key = event.key.toLowerCase();
+
+  if (!ARROW_KEYS.has(event.key)) commitKeyboardNudge();
 
   if (commandKey && key === "z") {
     event.preventDefault();
@@ -534,14 +545,20 @@ window.addEventListener("keydown", (event) => {
     deleteSelected();
     return;
   }
-  if (selected.size && ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
+  if (selected.size && ARROW_KEYS.has(event.key)) {
     event.preventDefault();
     const amount = event.shiftKey ? 10 : 1;
     const dx = event.key === "ArrowLeft" ? -amount : event.key === "ArrowRight" ? amount : 0;
     const dy = event.key === "ArrowUp" ? -amount : event.key === "ArrowDown" ? amount : 0;
     moveSelection(dx, dy);
+    keyboardNudgePending = true;
   }
 });
+
+window.addEventListener("keyup", (event) => {
+  if (ARROW_KEYS.has(event.key)) commitKeyboardNudge();
+});
+window.addEventListener("blur", commitKeyboardNudge);
 
 function updateFilter() {
   const blur = Number(blurRange.value);
@@ -716,7 +733,7 @@ async function loadLocalFonts({ silent = false } = {}) {
   }
 
   loadLocalFontsButton.disabled = true;
-  localFontsStatus.textContent = "Reading font library...";
+  if (!silent) localFontsStatus.textContent = "Reading font library...";
   try {
     const fonts = await window.queryLocalFonts();
     const families = [...new Set(fonts.map((font) => font.family).filter(Boolean))]
@@ -727,8 +744,10 @@ async function loadLocalFonts({ silent = false } = {}) {
     loadLocalFontsButton.textContent = "Reload local fonts";
     if (!silent) showToast(`${families.length} local font families loaded`);
   } catch {
-    localFontsStatus.textContent = "Permission denied or unavailable";
-    if (!silent) showToast("Allow local font access, then try again");
+    if (!silent) {
+      localFontsStatus.textContent = "Permission denied or unavailable";
+      showToast("Allow local font access, then try again");
+    }
   } finally {
     loadLocalFontsButton.disabled = false;
   }
@@ -752,6 +771,7 @@ function parseGoogleFontInput(rawValue) {
     }
     if (url.hostname !== "fonts.googleapis.com") throw new Error("Use a Google Fonts URL");
     const families = url.searchParams.getAll("family")
+      .flatMap((value) => value.split("|"))
       .map((family) => family.split(":")[0].replaceAll("+", " ").trim())
       .filter(Boolean);
     if (!families.length) throw new Error("No font family found");
