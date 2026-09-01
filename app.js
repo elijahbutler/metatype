@@ -1,6 +1,8 @@
 const NS = "http://www.w3.org/2000/svg";
-const DESIGN_STORAGE_KEY = "metatype.design.v1";
-const DESIGN_STORAGE_VERSION = 1;
+const LEGACY_DESIGN_STORAGE_KEY = "metatype.design.v1";
+const DESIGN_STORAGE_KEY = "metatype.design.v2";
+const DESIGN_SNAPSHOT_VERSION = 1;
+const DESIGN_STORAGE_VERSION = 2;
 
 const stage = document.querySelector("#stage");
 const gooLayer = document.querySelector("#gooLayer");
@@ -620,7 +622,7 @@ function showToast(message) {
 
 function captureHistoryState() {
   return JSON.stringify({
-    version: DESIGN_STORAGE_VERSION,
+    version: DESIGN_SNAPSHOT_VERSION,
     markup: gooLayer.innerHTML,
     nextId,
     nextGroupId,
@@ -660,7 +662,7 @@ function validGoogleFontState(font) {
 function parseDesignState(serializedState) {
   const state = JSON.parse(serializedState);
   const isValid = state
-    && state.version === DESIGN_STORAGE_VERSION
+    && state.version === DESIGN_SNAPSHOT_VERSION
     && typeof state.markup === "string"
     && isIntegerAtLeast(state.nextId, 1)
     && isIntegerAtLeast(state.nextGroupId, 1)
@@ -676,6 +678,46 @@ function parseDesignState(serializedState) {
   return state;
 }
 
+function serializeDesignHistory(serializedState) {
+  const savedHistory = [...history];
+  let savedHistoryIndex = historyIndex;
+
+  if (savedHistory[savedHistoryIndex] !== serializedState) {
+    savedHistory.splice(savedHistoryIndex + 1);
+    savedHistory.push(serializedState);
+    if (savedHistory.length > 100) savedHistory.shift();
+    savedHistoryIndex = savedHistory.length - 1;
+  }
+
+  return JSON.stringify({
+    version: DESIGN_STORAGE_VERSION,
+    history: savedHistory,
+    historyIndex: savedHistoryIndex
+  });
+}
+
+function parseDesignHistory(serializedDesign) {
+  const savedDesign = JSON.parse(serializedDesign);
+
+  if (savedDesign?.version === DESIGN_SNAPSHOT_VERSION && typeof savedDesign.markup === "string") {
+    return { history: [JSON.stringify(parseDesignState(serializedDesign))], historyIndex: 0 };
+  }
+
+  const hasValidHistory = savedDesign
+    && savedDesign.version === DESIGN_STORAGE_VERSION
+    && Array.isArray(savedDesign.history)
+    && savedDesign.history.length > 0
+    && savedDesign.history.length <= 100
+    && isIntegerAtLeast(savedDesign.historyIndex, 0)
+    && savedDesign.historyIndex < savedDesign.history.length;
+  if (!hasValidHistory) throw new Error("Invalid saved design history");
+
+  return {
+    history: savedDesign.history.map((entry) => JSON.stringify(parseDesignState(entry))),
+    historyIndex: savedDesign.historyIndex
+  };
+}
+
 function restoreMarkup(markup) {
   const parsed = new DOMParser().parseFromString(`<svg xmlns="${NS}">${markup}</svg>`, "image/svg+xml");
   if (parsed.querySelector("parsererror")) throw new Error("Invalid saved design markup");
@@ -685,7 +727,8 @@ function restoreMarkup(markup) {
 
 function persistDesign(serializedState, { notify = true } = {}) {
   try {
-    window.localStorage.setItem(DESIGN_STORAGE_KEY, serializedState);
+    window.localStorage.setItem(DESIGN_STORAGE_KEY, serializeDesignHistory(serializedState));
+    window.localStorage.removeItem(LEGACY_DESIGN_STORAGE_KEY);
   } catch {
     if (notify && !storageWarningShown) {
       storageWarningShown = true;
@@ -695,25 +738,26 @@ function persistDesign(serializedState, { notify = true } = {}) {
 }
 
 function loadSavedDesign() {
-  let serializedState;
+  let serializedDesign;
   try {
-    serializedState = window.localStorage.getItem(DESIGN_STORAGE_KEY);
+    serializedDesign = window.localStorage.getItem(DESIGN_STORAGE_KEY)
+      || window.localStorage.getItem(LEGACY_DESIGN_STORAGE_KEY);
   } catch {
     return false;
   }
-  if (!serializedState) return false;
+  if (!serializedDesign) return false;
 
   try {
-    restoreHistoryState(serializedState);
-    const normalizedState = captureHistoryState();
-    history.push(normalizedState);
-    historyIndex = 0;
-    updateHistoryControls();
-    persistDesign(normalizedState, { notify: false });
+    const savedDesign = parseDesignHistory(serializedDesign);
+    history.push(...savedDesign.history);
+    historyIndex = savedDesign.historyIndex;
+    restoreHistoryState(history[historyIndex]);
+    persistDesign(history[historyIndex], { notify: false });
     return true;
   } catch {
     try {
       window.localStorage.removeItem(DESIGN_STORAGE_KEY);
+      window.localStorage.removeItem(LEGACY_DESIGN_STORAGE_KEY);
     } catch {
       // A blocked storage API needs no further cleanup.
     }
