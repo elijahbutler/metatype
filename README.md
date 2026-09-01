@@ -13,6 +13,8 @@ Then open [http://localhost:4173](http://localhost:4173).
 
 You can also double-click `index.html`, but running the small local server is more reliable for SVG imports and exports.
 
+Metatype saves the current design in your browser after each edit. Refreshing or reopening the page restores the canvas, melt settings, colors, transparency, and imported Google Fonts. Resetting the canvas replaces the saved design with the starter design.
+
 ## Use it
 
 1. Choose a font, size, weight, style, kerning, and word spacing.
