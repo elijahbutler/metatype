@@ -15,11 +15,25 @@ You can also double-click `index.html`, but running the small local server is mo
 
 ## Use it
 
-1. Choose a system font, size, weight, style, kerning, and word spacing.
+1. Choose a font, size, weight, style, kerning, and word spacing.
 2. Add a word or phrase. Every visible letter becomes a separate draggable object while spaces keep their measured width.
-3. Adjust **Melt distance** to control when pieces join.
-4. Adjust **Edge** to sharpen or soften the silhouette.
-5. Import outlined SVG lettering from Illustrator for custom type.
-6. Export the result as SVG or a 2× PNG.
+3. Drag across the canvas to select several pieces, then group them. Shift-click adds or removes pieces from the selection.
+4. Adjust **Melt distance** to control when pieces join.
+5. Adjust **Edge** to sharpen or soften the silhouette.
+6. Import outlined SVG lettering from Illustrator for custom type.
+7. Export the result as SVG or a 2× PNG.
+
+Chrome and Edge can load every installed font after you allow local font access. You can also import a Google Font by entering its family name or pasting a URL from Google Fonts.
+
+## Shortcuts
+
+- `Command/Ctrl+A`: select every piece
+- `Command/Ctrl+Z`: undo
+- `Shift+Command/Ctrl+Z` or `Ctrl+Y`: redo
+- `Command/Ctrl+G`: group the selection
+- `Shift+Command/Ctrl+G`: ungroup the selection
+- `Command/Ctrl+D`: duplicate the selection
+- `Delete` or `Backspace`: delete the selection
+- Arrow keys: nudge the selection by 1 px, or 10 px while holding Shift
 
 The exported SVG keeps the liquid filter live. If you need plain paths for a printer or another design app, open the export in Illustrator and expand or rasterize the appearance there.
