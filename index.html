@@ -3,9 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#d8ff3e" />
+    <meta name="theme-color" content="#0f1011" />
     <meta name="description" content="A local, live liquid-lettering editor for SVG shapes." />
     <title>Metatype</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400&family=Roboto+Mono:wght@400;500&display=swap"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -13,22 +19,24 @@
       <header class="topbar">
         <a class="brand" href="#" aria-label="Metatype home">
           <span class="brand-mark" aria-hidden="true"></span>
-          METATYPE
+          <span>Meta<i>type</i></span>
         </a>
         <p class="status"><span></span> Local only</p>
         <div class="top-actions">
           <button class="button button-quiet" id="undoButton" type="button" disabled>Undo</button>
           <button class="button button-quiet" id="redoButton" type="button" disabled>Redo</button>
           <button class="button button-quiet" id="resetButton" type="button">Reset</button>
-          <button class="button button-dark" id="exportSvgButton" type="button">Export SVG</button>
-          <button class="button button-acid" id="exportPngButton" type="button">Export PNG</button>
+          <button class="button button-ghost" id="exportSvgButton" type="button">Export SVG</button>
+          <button class="button button-primary" id="exportPngButton" type="button">
+            Export PNG <span class="arrow" aria-hidden="true">&#8594;</span>
+          </button>
         </div>
       </header>
 
       <section class="workspace">
         <aside class="panel tools-panel" aria-label="Shape tools">
           <div class="panel-heading">
-            <span>01</span>
+            <span class="index">01</span>
             <h1>Build</h1>
           </div>
 
@@ -133,7 +141,7 @@
 
           <div class="hint">
             <p>Text groups</p>
-            <span>Drag across pieces to select them, then group them. Hold Shift to add or remove pieces from the selection.</span>
+            <span>Drag across pieces to select them, then group. Shift-click adds or removes one piece.</span>
           </div>
 
           <div class="selection-actions">
@@ -146,10 +154,11 @@
 
         <section class="canvas-column" aria-label="Canvas">
           <div class="canvas-topline">
-            <p>Drag pieces or drag empty canvas to select.</p>
+            <p>Drag a piece to move it. Drag the canvas to select.</p>
             <p><kbd>⌘A</kbd> all <kbd>⌘Z</kbd> undo <kbd>⇧⌘Z</kbd> redo</p>
           </div>
-          <div class="canvas-wrap" id="canvasWrap">
+          <div class="canvas-frame">
+            <div class="canvas-wrap" id="canvasWrap">
             <svg id="stage" viewBox="0 0 1200 760" role="img" aria-label="Liquid lettering canvas">
               <defs>
                 <filter id="gooFilter" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
@@ -164,8 +173,9 @@
               <g id="selectionLayer" pointer-events="none"></g>
             </svg>
             <div class="empty-state" id="emptyState" hidden>
-              <p>Your canvas is empty.</p>
-              <button id="emptyAddButton" type="button">Add some text</button>
+              <p>The canvas is <i>empty</i>.</p>
+              <button id="emptyAddButton" type="button">Add text</button>
+            </div>
             </div>
           </div>
           <div class="canvas-footer">
@@ -176,7 +186,7 @@
 
         <aside class="panel controls-panel" aria-label="Effect controls">
           <div class="panel-heading">
-            <span>02</span>
+            <span class="index">02</span>
             <h2>Melt</h2>
           </div>
 
@@ -222,7 +232,7 @@
 
           <div class="technical-note">
             <span>How it works</span>
-            <p>A blur joins nearby shapes. An alpha threshold cuts the edge back to a solid silhouette.</p>
+            <p>A Gaussian blur bleeds nearby shapes into each other. An alpha threshold then cuts the soft edge back to a solid silhouette.</p>
           </div>
         </aside>
       </section>

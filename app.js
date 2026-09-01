@@ -4,10 +4,15 @@ const DESIGN_STORAGE_KEY = "metatype.design.v2";
 const DESIGN_SNAPSHOT_VERSION = 1;
 const DESIGN_STORAGE_VERSION = 2;
 
+/* Iris Gleam, the one chromatic signal allowed on the canvas. See DESIGN.md. */
+const SELECTION_COLOR = "#847dff";
+const SELECTION_FILL = "rgba(132, 125, 255, .16)";
+
 const stage = document.querySelector("#stage");
 const gooLayer = document.querySelector("#gooLayer");
 const selectionLayer = document.querySelector("#selectionLayer");
 const stageBackground = document.querySelector("#stageBackground");
+const canvasWrap = document.querySelector("#canvasWrap");
 const blurRange = document.querySelector("#blurRange");
 const edgeRange = document.querySelector("#edgeRange");
 const scaleRange = document.querySelector("#scaleRange");
@@ -308,7 +313,7 @@ function drawSelection() {
       width: box.width + padding * 2,
       height: box.height + padding * 2,
       fill: "none",
-      stroke: "#7da600",
+      stroke: SELECTION_COLOR,
       "stroke-width": String(2 / Math.max(scale, 0.1)),
       "stroke-dasharray": `${7 / scale} ${5 / scale}`,
       "vector-effect": "non-scaling-stroke"
@@ -324,8 +329,8 @@ function drawSelection() {
       y,
       width: Math.abs(pointerAction.endX - pointerAction.startX),
       height: Math.abs(pointerAction.endY - pointerAction.startY),
-      fill: "rgba(216, 255, 62, .18)",
-      stroke: "#7da600",
+      fill: SELECTION_FILL,
+      stroke: SELECTION_COLOR,
       "stroke-width": "2",
       "stroke-dasharray": "8 5",
       "vector-effect": "non-scaling-stroke"
@@ -603,6 +608,7 @@ function setBackground(value) {
 
 function updateTransparency() {
   stageBackground.style.display = transparentToggle.checked ? "none" : "";
+  canvasWrap.classList.toggle("is-transparent", transparentToggle.checked);
 }
 
 function updateUiState() {
@@ -1123,6 +1129,7 @@ updateFilter();
 updateTextStyleOutputs();
 setFill(fillColor.value);
 setBackground(backgroundColor.value);
+updateTransparency();
 if (!loadSavedDesign()) {
   loadPreset();
   commitHistory();
