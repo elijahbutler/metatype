@@ -21,7 +21,7 @@ Metatype saves the current design in your browser after each edit. Refreshing or
 2. Add a word or phrase. Every visible letter becomes a separate draggable object while spaces keep their measured width.
 3. Drag across the canvas to select several pieces, then group them. Shift-click adds or removes pieces from the selection.
 4. Drag the square selection handle to resize. Drag the round handle to rotate, or hold Shift to snap rotation to 15-degree increments.
-5. Choose a canvas preset or enter a custom size between 240 and 4096 pixels. Canvas size, color, and transparency carry through to exports.
+5. Choose a canvas preset, or enter a custom width and height between 240 and 4096 pixels and select **Apply size** or press Enter. Canvas size, color, and transparency carry through to exports.
 6. Adjust **Melt distance** to control when pieces join, then use **Edge** to sharpen or soften the silhouette.
 7. Import outlined SVG lettering from Illustrator for custom type, or export the result as SVG or a 2× PNG.
 

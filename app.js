@@ -455,18 +455,20 @@ function drawSelection() {
       "stroke-width": String(strokeWidth),
       "vector-effect": "non-scaling-stroke"
     }));
+    const handleAbove = bounds.top - rotationOffset - handleRadius >= 0;
+    const rotationY = handleAbove ? bounds.top - rotationOffset : bounds.bottom + rotationOffset;
     selectionLayer.append(svgElement("line", {
       x1: bounds.centerX,
-      y1: bounds.top,
+      y1: handleAbove ? bounds.top : bounds.bottom,
       x2: bounds.centerX,
-      y2: bounds.top - rotationOffset,
+      y2: rotationY,
       stroke: "#171717",
       "stroke-width": String(strokeWidth),
       "vector-effect": "non-scaling-stroke"
     }));
     selectionLayer.append(svgElement("circle", {
       cx: bounds.centerX,
-      cy: bounds.top - rotationOffset,
+      cy: rotationY,
       r: handleRadius,
       fill: "#d8ff3e",
       stroke: "#171717",
@@ -1291,16 +1293,25 @@ function exportPng() {
   const url = URL.createObjectURL(blob);
   const image = new Image();
   image.onload = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = canvasWidth * 2;
-    canvas.height = canvasHeight * 2;
-    const context = canvas.getContext("2d");
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
     URL.revokeObjectURL(url);
-    canvas.toBlob((png) => {
-      if (png) downloadBlob(png, "metatype@2x.png");
-      showToast("2× PNG exported");
-    }, "image/png");
+    try {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvasWidth * 2;
+      canvas.height = canvasHeight * 2;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("Unsupported canvas size");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((png) => {
+        if (!png) {
+          showToast("PNG export failed. Try SVG instead.");
+          return;
+        }
+        downloadBlob(png, "metatype@2x.png");
+        showToast("2× PNG exported");
+      }, "image/png");
+    } catch {
+      showToast("PNG export failed. Try SVG instead.");
+    }
   };
   image.onerror = () => {
     URL.revokeObjectURL(url);
