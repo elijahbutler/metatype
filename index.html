@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#d8ff3e" />
+    <meta name="description" content="A local, live liquid-lettering editor for SVG shapes." />
+    <title>Metatype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Metatype home">
+          <span class="brand-mark" aria-hidden="true"></span>
+          METATYPE
+        </a>
+        <p class="status"><span></span> Local only</p>
+        <div class="top-actions">
+          <button class="button button-quiet" id="resetButton" type="button">Reset</button>
+          <button class="button button-dark" id="exportSvgButton" type="button">Export SVG</button>
+          <button class="button button-acid" id="exportPngButton" type="button">Export PNG</button>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <aside class="panel tools-panel" aria-label="Shape tools">
+          <div class="panel-heading">
+            <span>01</span>
+            <h1>Build</h1>
+          </div>
+
+          <label class="field text-field">
+            <span>Text</span>
+            <div class="input-action">
+              <input id="textInput" type="text" value="CIRCA TYPE" maxlength="24" autocomplete="off" />
+              <button id="addTextButton" type="button" aria-label="Add text">+</button>
+            </div>
+          </label>
+
+          <div class="type-controls" aria-label="Text styling">
+            <label class="compact-field font-field">
+              <span>System font</span>
+              <select id="fontSelect">
+                <option value="system-sans">System sans</option>
+                <option value="arial-black" selected>Arial Black</option>
+                <option value="avenir-next">Avenir Next</option>
+                <option value="helvetica-neue">Helvetica Neue</option>
+                <option value="futura">Futura</option>
+                <option value="gill-sans">Gill Sans</option>
+                <option value="optima">Optima</option>
+                <option value="didot">Didot</option>
+                <option value="baskerville">Baskerville</option>
+                <option value="georgia">Georgia</option>
+                <option value="times-new-roman">Times New Roman</option>
+                <option value="american-typewriter">American Typewriter</option>
+                <option value="courier-new">Courier New</option>
+                <option value="copperplate">Copperplate</option>
+              </select>
+            </label>
+
+            <div class="compact-field-row">
+              <label class="compact-field">
+                <span>Size</span>
+                <input id="fontSizeInput" type="number" min="40" max="320" step="1" value="170" inputmode="numeric" />
+              </label>
+              <label class="compact-field">
+                <span>Weight</span>
+                <select id="fontWeightSelect">
+                  <option value="400">Regular</option>
+                  <option value="600">Semibold</option>
+                  <option value="700">Bold</option>
+                  <option value="800">Extra bold</option>
+                  <option value="900" selected>Black</option>
+                </select>
+              </label>
+            </div>
+
+            <label class="compact-field">
+              <span>Style</span>
+              <select id="fontStyleSelect">
+                <option value="normal" selected>Roman</option>
+                <option value="italic">Italic</option>
+              </select>
+            </label>
+
+            <label class="mini-range-field">
+              <span><b>Kerning</b><output id="kerningOutput">0 px</output></span>
+              <input id="kerningRange" type="range" min="-40" max="120" step="1" value="0" />
+            </label>
+
+            <label class="mini-range-field">
+              <span><b>Word spacing</b><output id="wordSpacingOutput">0 px</output></span>
+              <input id="wordSpacingRange" type="range" min="-40" max="200" step="1" value="0" />
+            </label>
+          </div>
+
+          <div class="tool-grid">
+            <button class="tool-button" id="addCircleButton" type="button">
+              <span class="shape-icon circle-icon" aria-hidden="true"></span>
+              Circle
+            </button>
+            <button class="tool-button" id="addSquareButton" type="button">
+              <span class="shape-icon square-icon" aria-hidden="true"></span>
+              Block
+            </button>
+          </div>
+
+          <label class="import-button" for="svgInput">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M5 14v5h14v-5" /></svg>
+            Import outlined SVG
+          </label>
+          <input id="svgInput" type="file" accept=".svg,image/svg+xml" hidden />
+
+          <div class="hint">
+            <p>Best results</p>
+            <span>Added text keeps natural word spacing and makes every visible letter its own draggable piece.</span>
+          </div>
+
+          <div class="selection-actions">
+            <button id="duplicateButton" type="button" disabled>Duplicate</button>
+            <button id="deleteButton" type="button" disabled>Delete</button>
+          </div>
+        </aside>
+
+        <section class="canvas-column" aria-label="Canvas">
+          <div class="canvas-topline">
+            <p>Drag the pieces. Bring them close enough to join.</p>
+            <p><kbd>⌫</kbd> delete <kbd>↑</kbd> nudge</p>
+          </div>
+          <div class="canvas-wrap" id="canvasWrap">
+            <svg id="stage" viewBox="0 0 1200 760" role="img" aria-label="Liquid lettering canvas">
+              <defs>
+                <filter id="gooFilter" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur id="gooBlur" in="SourceGraphic" stdDeviation="15" result="blur" />
+                  <feColorMatrix id="gooMatrix" in="blur" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 28 -13" result="goo" />
+                  <feFlood id="gooColor" flood-color="#171717" result="color" />
+                  <feComposite in="color" in2="goo" operator="in" />
+                </filter>
+              </defs>
+              <rect id="stageBackground" width="1200" height="760" fill="#f1eee6" />
+              <g id="gooLayer" filter="url(#gooFilter)"></g>
+              <g id="selectionLayer" pointer-events="none"></g>
+            </svg>
+            <div class="empty-state" id="emptyState" hidden>
+              <p>Your canvas is empty.</p>
+              <button id="emptyAddButton" type="button">Add some text</button>
+            </div>
+          </div>
+          <div class="canvas-footer">
+            <span>1200 × 760</span>
+            <span id="objectCount">5 pieces</span>
+          </div>
+        </section>
+
+        <aside class="panel controls-panel" aria-label="Effect controls">
+          <div class="panel-heading">
+            <span>02</span>
+            <h2>Melt</h2>
+          </div>
+
+          <label class="range-field">
+            <span><b>Melt distance</b><output id="blurOutput">15</output></span>
+            <input id="blurRange" type="range" min="0" max="36" step="1" value="15" />
+          </label>
+
+          <label class="range-field">
+            <span><b>Edge</b><output id="edgeOutput">28</output></span>
+            <input id="edgeRange" type="range" min="8" max="54" step="1" value="28" />
+          </label>
+
+          <label class="range-field">
+            <span><b>Scale</b><output id="scaleOutput">100%</output></span>
+            <input id="scaleRange" type="range" min="20" max="250" step="1" value="100" disabled />
+          </label>
+
+          <div class="color-field">
+            <label for="fillColor">Shape</label>
+            <div class="color-row">
+              <input id="fillColor" type="color" value="#171717" />
+              <input id="fillHex" type="text" value="#171717" maxlength="7" spellcheck="false" />
+            </div>
+          </div>
+
+          <div class="color-field">
+            <label for="backgroundColor">Canvas</label>
+            <div class="color-row">
+              <input id="backgroundColor" type="color" value="#f1eee6" />
+              <input id="backgroundHex" type="text" value="#F1EEE6" maxlength="7" spellcheck="false" />
+            </div>
+          </div>
+
+          <label class="toggle-row">
+            <span>
+              <b>Transparent PNG</b>
+              <small>SVG stays transparent too</small>
+            </span>
+            <input id="transparentToggle" type="checkbox" />
+            <i aria-hidden="true"></i>
+          </label>
+
+          <div class="technical-note">
+            <span>How it works</span>
+            <p>A blur joins nearby shapes. An alpha threshold cuts the edge back to a solid silhouette.</p>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
