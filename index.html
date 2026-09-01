@@ -17,6 +17,8 @@
         </a>
         <p class="status"><span></span> Local only</p>
         <div class="top-actions">
+          <button class="button button-quiet" id="undoButton" type="button" disabled>Undo</button>
+          <button class="button button-quiet" id="redoButton" type="button" disabled>Redo</button>
           <button class="button button-quiet" id="resetButton" type="button">Reset</button>
           <button class="button button-dark" id="exportSvgButton" type="button">Export SVG</button>
           <button class="button button-acid" id="exportPngButton" type="button">Export PNG</button>
@@ -40,23 +42,40 @@
 
           <div class="type-controls" aria-label="Text styling">
             <label class="compact-field font-field">
-              <span>System font</span>
+              <span>Font</span>
               <select id="fontSelect">
-                <option value="system-sans">System sans</option>
-                <option value="arial-black" selected>Arial Black</option>
-                <option value="avenir-next">Avenir Next</option>
-                <option value="helvetica-neue">Helvetica Neue</option>
-                <option value="futura">Futura</option>
-                <option value="gill-sans">Gill Sans</option>
-                <option value="optima">Optima</option>
-                <option value="didot">Didot</option>
-                <option value="baskerville">Baskerville</option>
-                <option value="georgia">Georgia</option>
-                <option value="times-new-roman">Times New Roman</option>
-                <option value="american-typewriter">American Typewriter</option>
-                <option value="courier-new">Courier New</option>
-                <option value="copperplate">Copperplate</option>
+                <optgroup label="Built in">
+                  <option value="system-sans">System sans</option>
+                  <option value="arial-black" selected>Arial Black</option>
+                  <option value="avenir-next">Avenir Next</option>
+                  <option value="helvetica-neue">Helvetica Neue</option>
+                  <option value="futura">Futura</option>
+                  <option value="gill-sans">Gill Sans</option>
+                  <option value="optima">Optima</option>
+                  <option value="didot">Didot</option>
+                  <option value="baskerville">Baskerville</option>
+                  <option value="georgia">Georgia</option>
+                  <option value="times-new-roman">Times New Roman</option>
+                  <option value="american-typewriter">American Typewriter</option>
+                  <option value="courier-new">Courier New</option>
+                  <option value="copperplate">Copperplate</option>
+                </optgroup>
+                <optgroup id="localFontOptions" label="Local fonts"></optgroup>
+                <optgroup id="googleFontOptions" label="Google Fonts"></optgroup>
               </select>
+            </label>
+
+            <div class="font-source-row">
+              <button id="loadLocalFontsButton" type="button">Load local fonts</button>
+              <span id="localFontsStatus">Browser permission required</span>
+            </div>
+
+            <label class="compact-field google-font-field">
+              <span>Import from Google Fonts</span>
+              <div class="input-action compact-input-action">
+                <input id="googleFontInput" type="text" placeholder="Font name or URL" autocomplete="off" spellcheck="false" />
+                <button id="importGoogleFontButton" type="button" aria-label="Import Google font">+</button>
+              </div>
             </label>
 
             <div class="compact-field-row">
@@ -113,11 +132,13 @@
           <input id="svgInput" type="file" accept=".svg,image/svg+xml" hidden />
 
           <div class="hint">
-            <p>Best results</p>
-            <span>Added text keeps natural word spacing and makes every visible letter its own draggable piece.</span>
+            <p>Text groups</p>
+            <span>Drag across pieces to select them, then group them. Hold Shift to add or remove pieces from the selection.</span>
           </div>
 
           <div class="selection-actions">
+            <button id="groupButton" type="button" disabled>Group</button>
+            <button id="ungroupButton" type="button" disabled>Ungroup</button>
             <button id="duplicateButton" type="button" disabled>Duplicate</button>
             <button id="deleteButton" type="button" disabled>Delete</button>
           </div>
@@ -125,8 +146,8 @@
 
         <section class="canvas-column" aria-label="Canvas">
           <div class="canvas-topline">
-            <p>Drag the pieces. Bring them close enough to join.</p>
-            <p><kbd>⌫</kbd> delete <kbd>↑</kbd> nudge</p>
+            <p>Drag pieces or drag empty canvas to select.</p>
+            <p><kbd>⌘A</kbd> all <kbd>⌘Z</kbd> undo <kbd>⇧⌘Z</kbd> redo</p>
           </div>
           <div class="canvas-wrap" id="canvasWrap">
             <svg id="stage" viewBox="0 0 1200 760" role="img" aria-label="Liquid lettering canvas">
