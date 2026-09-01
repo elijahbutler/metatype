@@ -1,4 +1,6 @@
 const NS = "http://www.w3.org/2000/svg";
+const DESIGN_STORAGE_KEY = "metatype.design.v1";
+const DESIGN_STORAGE_VERSION = 1;
 
 const stage = document.querySelector("#stage");
 const gooLayer = document.querySelector("#gooLayer");
@@ -61,6 +63,7 @@ let nextId = 1;
 let nextGroupId = 1;
 let historyIndex = -1;
 let keyboardNudgePending = false;
+let storageWarningShown = false;
 let toastTimer;
 
 function svgElement(name, attributes = {}) {
@@ -559,6 +562,7 @@ window.addEventListener("keyup", (event) => {
   if (ARROW_KEYS.has(event.key)) commitKeyboardNudge();
 });
 window.addEventListener("blur", commitKeyboardNudge);
+window.addEventListener("pagehide", () => persistDesign(captureHistoryState(), { notify: false }));
 
 function updateFilter() {
   const blur = Number(blurRange.value);
@@ -616,6 +620,7 @@ function showToast(message) {
 
 function captureHistoryState() {
   return JSON.stringify({
+    version: DESIGN_STORAGE_VERSION,
     markup: gooLayer.innerHTML,
     nextId,
     nextGroupId,
@@ -623,8 +628,97 @@ function captureHistoryState() {
     edge: edgeRange.value,
     fill: fillColor.value,
     background: backgroundColor.value,
-    transparent: transparentToggle.checked
+    transparent: transparentToggle.checked,
+    googleFonts: [...document.querySelectorAll("link[data-google-font]")].map((link) => ({
+      url: link.href,
+      families: googleFontFamiliesFromUrl(link.href)
+    }))
   });
+}
+
+function isIntegerAtLeast(value, minimum) {
+  return Number.isInteger(value) && value >= minimum;
+}
+
+function isRangeValue(value, minimum, maximum) {
+  const number = Number(value);
+  return typeof value === "string" && Number.isFinite(number) && number >= minimum && number <= maximum;
+}
+
+function validGoogleFontState(font) {
+  if (!font || typeof font.url !== "string" || !Array.isArray(font.families)) return false;
+  if (!font.families.every((family) => typeof family === "string" && family.length > 0)) return false;
+
+  try {
+    const url = new URL(font.url);
+    return url.protocol === "https:" && url.hostname === "fonts.googleapis.com";
+  } catch {
+    return false;
+  }
+}
+
+function parseDesignState(serializedState) {
+  const state = JSON.parse(serializedState);
+  const isValid = state
+    && state.version === DESIGN_STORAGE_VERSION
+    && typeof state.markup === "string"
+    && isIntegerAtLeast(state.nextId, 1)
+    && isIntegerAtLeast(state.nextGroupId, 1)
+    && isRangeValue(state.blur, Number(blurRange.min), Number(blurRange.max))
+    && isRangeValue(state.edge, Number(edgeRange.min), Number(edgeRange.max))
+    && validHex(state.fill)
+    && validHex(state.background)
+    && typeof state.transparent === "boolean"
+    && Array.isArray(state.googleFonts)
+    && state.googleFonts.every(validGoogleFontState);
+
+  if (!isValid) throw new Error("Invalid saved design");
+  return state;
+}
+
+function restoreMarkup(markup) {
+  const parsed = new DOMParser().parseFromString(`<svg xmlns="${NS}">${markup}</svg>`, "image/svg+xml");
+  if (parsed.querySelector("parsererror")) throw new Error("Invalid saved design markup");
+  sanitizeImportedSvg(parsed);
+  gooLayer.replaceChildren(...[...parsed.documentElement.childNodes].map((node) => document.importNode(node, true)));
+}
+
+function persistDesign(serializedState, { notify = true } = {}) {
+  try {
+    window.localStorage.setItem(DESIGN_STORAGE_KEY, serializedState);
+  } catch {
+    if (notify && !storageWarningShown) {
+      storageWarningShown = true;
+      showToast("This browser could not save the design locally");
+    }
+  }
+}
+
+function loadSavedDesign() {
+  let serializedState;
+  try {
+    serializedState = window.localStorage.getItem(DESIGN_STORAGE_KEY);
+  } catch {
+    return false;
+  }
+  if (!serializedState) return false;
+
+  try {
+    restoreHistoryState(serializedState);
+    const normalizedState = captureHistoryState();
+    history.push(normalizedState);
+    historyIndex = 0;
+    updateHistoryControls();
+    persistDesign(normalizedState, { notify: false });
+    return true;
+  } catch {
+    try {
+      window.localStorage.removeItem(DESIGN_STORAGE_KEY);
+    } catch {
+      // A blocked storage API needs no further cleanup.
+    }
+    return false;
+  }
 }
 
 function updateHistoryControls() {
@@ -634,17 +728,22 @@ function updateHistoryControls() {
 
 function commitHistory() {
   const state = captureHistoryState();
-  if (history[historyIndex] === state) return;
+  if (history[historyIndex] === state) {
+    persistDesign(state);
+    return;
+  }
   history.splice(historyIndex + 1);
   history.push(state);
   if (history.length > 100) history.shift();
   historyIndex = history.length - 1;
   updateHistoryControls();
+  persistDesign(state);
 }
 
 function restoreHistoryState(serializedState) {
-  const state = JSON.parse(serializedState);
-  gooLayer.innerHTML = state.markup;
+  const state = parseDesignState(serializedState);
+  restoreGoogleFonts(state.googleFonts);
+  restoreMarkup(state.markup);
   nextId = state.nextId;
   nextGroupId = state.nextGroupId;
   blurRange.value = state.blur;
@@ -665,6 +764,7 @@ function undo() {
   if (historyIndex <= 0) return;
   historyIndex -= 1;
   restoreHistoryState(history[historyIndex]);
+  persistDesign(history[historyIndex]);
   showToast("Undone");
 }
 
@@ -672,6 +772,7 @@ function redo() {
   if (historyIndex >= history.length - 1) return;
   historyIndex += 1;
   restoreHistoryState(history[historyIndex]);
+  persistDesign(history[historyIndex]);
   showToast("Redone");
 }
 
@@ -784,6 +885,33 @@ function parseGoogleFontInput(rawValue) {
     families: [family],
     url: `https://fonts.googleapis.com/css2?family=${encodeURIComponent(family).replaceAll("%20", "+")}&display=swap`
   };
+}
+
+function googleFontFamiliesFromUrl(rawUrl) {
+  try {
+    const url = new URL(rawUrl);
+    if (url.protocol !== "https:" || url.hostname !== "fonts.googleapis.com") return [];
+    return url.searchParams.getAll("family")
+      .flatMap((value) => value.split("|"))
+      .map((family) => family.split(":")[0].replaceAll("+", " ").trim())
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function restoreGoogleFonts(fonts) {
+  fonts.forEach(({ url, families }) => {
+    let link = [...document.querySelectorAll("link[data-google-font]")].find((candidate) => candidate.href === url);
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = url;
+      link.dataset.googleFont = "";
+      document.head.append(link);
+    }
+    families.forEach((family) => addFontOption(googleFontOptions, "google", family));
+  });
 }
 
 async function importGoogleFont() {
@@ -951,6 +1079,8 @@ updateFilter();
 updateTextStyleOutputs();
 setFill(fillColor.value);
 setBackground(backgroundColor.value);
-loadPreset();
-commitHistory();
+if (!loadSavedDesign()) {
+  loadPreset();
+  commitHistory();
+}
 loadLocalFonts({ silent: true });
