@@ -154,7 +154,7 @@
 
         <section class="canvas-column" aria-label="Canvas">
           <div class="canvas-topline">
-            <p>Drag a piece to move it. Drag the canvas to select.</p>
+            <p>Drag a piece to move it. Drag the canvas to select. Use the handles to resize or rotate.</p>
             <p><kbd>⌘A</kbd> all <kbd>⌘Z</kbd> undo <kbd>⇧⌘Z</kbd> redo</p>
           </div>
           <div class="canvas-frame">
@@ -179,31 +179,76 @@
             </div>
           </div>
           <div class="canvas-footer">
-            <span>1200 × 760</span>
+            <span id="canvasDimensions">1200 × 760</span>
             <span id="objectCount">5 pieces</span>
           </div>
         </section>
 
-        <aside class="panel controls-panel" aria-label="Effect controls">
+        <aside class="panel controls-panel" aria-label="Design controls">
           <div class="panel-heading">
             <span class="index">02</span>
-            <h2>Melt</h2>
+            <h2>Design</h2>
           </div>
 
-          <label class="range-field">
-            <span><b>Melt distance</b><output id="blurOutput">15</output></span>
-            <input id="blurRange" type="range" min="0" max="36" step="1" value="15" />
-          </label>
+          <div class="control-section canvas-controls">
+            <div class="section-label">
+              <b>Canvas size</b>
+              <span>PX</span>
+            </div>
+            <label class="compact-field">
+              <span>Preset</span>
+              <select id="canvasPreset">
+                <option value="1200x760" selected>Landscape</option>
+                <option value="1080x1080">Square post</option>
+                <option value="1080x1350">Portrait post</option>
+                <option value="1080x1920">Story</option>
+                <option value="1920x1080">HD landscape</option>
+                <option value="custom">Custom</option>
+              </select>
+            </label>
+            <div class="dimension-row">
+              <label class="compact-field">
+                <span>Width</span>
+                <input id="canvasWidthInput" type="number" min="240" max="4096" step="1" value="1200" inputmode="numeric" />
+              </label>
+              <span aria-hidden="true">×</span>
+              <label class="compact-field">
+                <span>Height</span>
+                <input id="canvasHeightInput" type="number" min="240" max="4096" step="1" value="760" inputmode="numeric" />
+              </label>
+            </div>
+            <button class="apply-button" id="applyCanvasSizeButton" type="button">Apply size</button>
+          </div>
 
-          <label class="range-field">
-            <span><b>Edge</b><output id="edgeOutput">28</output></span>
-            <input id="edgeRange" type="range" min="8" max="54" step="1" value="28" />
-          </label>
+          <div class="control-section transform-controls">
+            <div class="section-label">
+              <b>Selection</b>
+              <span id="selectionCount">None</span>
+            </div>
 
-          <label class="range-field">
-            <span><b>Scale</b><output id="scaleOutput">100%</output></span>
-            <input id="scaleRange" type="range" min="20" max="250" step="1" value="100" disabled />
-          </label>
+            <label class="range-field">
+              <span><b>Size</b><output id="scaleOutput">100%</output></span>
+              <input id="scaleRange" type="range" min="20" max="400" step="1" value="100" disabled />
+            </label>
+
+            <label class="range-field">
+              <span><b>Rotation</b><output id="rotationOutput">0°</output></span>
+              <input id="rotationRange" type="range" min="-180" max="180" step="1" value="0" disabled />
+            </label>
+          </div>
+
+          <div class="control-section melt-controls">
+            <div class="section-label"><b>Melt</b></div>
+            <label class="range-field">
+              <span><b>Distance</b><output id="blurOutput">15</output></span>
+              <input id="blurRange" type="range" min="0" max="36" step="1" value="15" />
+            </label>
+
+            <label class="range-field">
+              <span><b>Edge</b><output id="edgeOutput">28</output></span>
+              <input id="edgeRange" type="range" min="8" max="54" step="1" value="28" />
+            </label>
+          </div>
 
           <div class="color-field">
             <label for="fillColor">Shape</label>
@@ -214,7 +259,7 @@
           </div>
 
           <div class="color-field">
-            <label for="backgroundColor">Canvas</label>
+            <label for="backgroundColor">Background</label>
             <div class="color-row">
               <input id="backgroundColor" type="color" value="#f1eee6" />
               <input id="backgroundHex" type="text" value="#F1EEE6" maxlength="7" spellcheck="false" />

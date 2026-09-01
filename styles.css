@@ -441,8 +441,11 @@ kbd {
 
 .canvas-wrap {
   position: relative;
-  width: min(100cqw, 100cqh * 1200 / 760);
-  aspect-ratio: 1200 / 760;
+  --canvas-ratio: 1.578947;
+  width: auto;
+  height: min(100cqh, calc(100cqw / var(--canvas-ratio)));
+  max-width: 100cqw;
+  aspect-ratio: var(--canvas-ratio);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
@@ -462,6 +465,10 @@ kbd {
 #gooLayer [data-id] { cursor: grab; }
 #gooLayer [data-id]:active { cursor: grabbing; }
 #stage.is-selecting { cursor: crosshair; }
+#selectionLayer [data-handle] { pointer-events: all; }
+#selectionLayer [data-handle="resize"] { cursor: nwse-resize; }
+#selectionLayer [data-handle="rotate"] { cursor: grab; }
+#selectionLayer [data-handle="rotate"]:active { cursor: grabbing; }
 
 .empty-state {
   position: absolute;
@@ -496,6 +503,33 @@ kbd {
 .empty-state[hidden] { display: none; }
 
 /* --- Controls panel ------------------------------------------------------- */
+
+.control-section { padding: 0 0 20px; border-bottom: 1px solid var(--line); }
+.control-section + .control-section { padding-top: 20px; }
+.section-label { min-height: 18px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.section-label b,
+.section-label span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .18em;
+}
+.section-label b { color: var(--cloud); }
+.section-label span { color: var(--fog); }
+.canvas-controls { display: grid; gap: 12px; }
+.dimension-row { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; }
+.dimension-row > span { padding-bottom: 11px; color: var(--fog); font-family: var(--font-mono); font-size: 11px; }
+.apply-button {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--r-control);
+  color: var(--void);
+  background: var(--pure);
+  font-size: 13px;
+}
+.apply-button:hover { background: var(--cloud); }
+.control-section .range-field:first-of-type { border-top: 0; padding-top: 0; }
 
 .range-field { display: block; padding: 20px 0; border-top: 1px solid var(--line); }
 .range-field > span > b { color: var(--fog); font-size: 10px; }
@@ -623,7 +657,7 @@ input[type="range"]:disabled::-webkit-slider-thumb { background: var(--fog); }
   .canvas-column { order: -1; grid-template-rows: auto auto auto; }
   /* Height is unbounded here, so the canvas sizes from width alone. */
   .canvas-frame { container-type: inline-size; padding: 14px 12px; }
-  .canvas-wrap { width: 100cqw; }
+  .canvas-wrap { width: 100cqw; height: auto; }
   .canvas-topline { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 14px 4px; }
   .tools-panel, .controls-panel { border: 0; border-top: 1px solid var(--line); }
   .top-actions { flex-wrap: wrap; justify-content: flex-end; gap: 6px; }

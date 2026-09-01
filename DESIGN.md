@@ -126,9 +126,10 @@ Melt panel where it reads as a footnote rather than a control.
 color would be invisible against `--obsidian`. The plate makes every value legible,
 including black.
 
-**Canvas frame.** A container query sizes the frame to the 1200x760 artwork ratio, so the
-1px border traces the artwork exactly and there is no letterboxing inside it. On narrow
-screens the frame switches to `container-type: inline-size` and sizes from width alone.
+**Canvas frame.** A container query sizes the frame to the current artwork ratio, so the
+1px border traces the artwork exactly and there is no letterboxing inside it. The editor
+updates `--canvas-ratio` when the canvas dimensions change. On narrow screens the frame
+switches to `container-type: inline-size` and sizes from width alone.
 
 **Transparency grid.** Steel with a 7% white check at 20px. Mid-tone on purpose. A light
 grid would swallow white lettering and a dark one swallows the default near-black.
