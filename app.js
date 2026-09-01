@@ -4,10 +4,15 @@ const DESIGN_STORAGE_KEY = "metatype.design.v2";
 const DESIGN_SNAPSHOT_VERSION = 1;
 const DESIGN_STORAGE_VERSION = 2;
 
+/* Iris Gleam, the one chromatic signal allowed on the canvas. See DESIGN.md. */
+const SELECTION_COLOR = "#847dff";
+const SELECTION_FILL = "rgba(132, 125, 255, .16)";
+
 const stage = document.querySelector("#stage");
 const gooLayer = document.querySelector("#gooLayer");
 const selectionLayer = document.querySelector("#selectionLayer");
 const stageBackground = document.querySelector("#stageBackground");
+const canvasWrap = document.querySelector("#canvasWrap");
 const blurRange = document.querySelector("#blurRange");
 const edgeRange = document.querySelector("#edgeRange");
 const scaleRange = document.querySelector("#scaleRange");
@@ -430,7 +435,7 @@ function drawSelection() {
       width: box.width + padding * 2,
       height: box.height + padding * 2,
       fill: "none",
-      stroke: "#7da600",
+      stroke: SELECTION_COLOR,
       "stroke-width": String(2 / Math.max(scale, 0.1)),
       "stroke-dasharray": `${7 / scale} ${5 / scale}`,
       "vector-effect": "non-scaling-stroke"
@@ -451,7 +456,7 @@ function drawSelection() {
       width: bounds.width,
       height: bounds.height,
       fill: "none",
-      stroke: "#171717",
+      stroke: SELECTION_COLOR,
       "stroke-width": String(strokeWidth),
       "vector-effect": "non-scaling-stroke"
     }));
@@ -462,7 +467,7 @@ function drawSelection() {
       y1: handleAbove ? bounds.top : bounds.bottom,
       x2: bounds.centerX,
       y2: rotationY,
-      stroke: "#171717",
+      stroke: SELECTION_COLOR,
       "stroke-width": String(strokeWidth),
       "vector-effect": "non-scaling-stroke"
     }));
@@ -470,7 +475,7 @@ function drawSelection() {
       cx: bounds.centerX,
       cy: rotationY,
       r: handleRadius,
-      fill: "#d8ff3e",
+      fill: SELECTION_COLOR,
       stroke: "#171717",
       "stroke-width": String(strokeWidth),
       "data-handle": "rotate"
@@ -480,7 +485,7 @@ function drawSelection() {
       y: bounds.bottom - handleRadius,
       width: handleRadius * 2,
       height: handleRadius * 2,
-      fill: "#d8ff3e",
+      fill: SELECTION_COLOR,
       stroke: "#171717",
       "stroke-width": String(strokeWidth),
       "data-handle": "resize"
@@ -495,8 +500,8 @@ function drawSelection() {
       y,
       width: Math.abs(pointerAction.endX - pointerAction.startX),
       height: Math.abs(pointerAction.endY - pointerAction.startY),
-      fill: "rgba(216, 255, 62, .18)",
-      stroke: "#7da600",
+      fill: SELECTION_FILL,
+      stroke: SELECTION_COLOR,
       "stroke-width": "2",
       "stroke-dasharray": "8 5",
       "vector-effect": "non-scaling-stroke"
@@ -822,6 +827,7 @@ function clampCanvasDimension(value) {
 function setCanvasSize(width, height) {
   canvasWidth = clampCanvasDimension(width);
   canvasHeight = clampCanvasDimension(height);
+  canvasWrap.style.setProperty("--canvas-ratio", String(canvasWidth / canvasHeight));
   stage.setAttribute("viewBox", `0 0 ${canvasWidth} ${canvasHeight}`);
   stage.setAttribute("width", String(canvasWidth));
   stage.setAttribute("height", String(canvasHeight));
@@ -850,6 +856,7 @@ function applyCanvasSize() {
 
 function updateTransparency() {
   stageBackground.style.display = transparentToggle.checked ? "none" : "";
+  canvasWrap.classList.toggle("is-transparent", transparentToggle.checked);
 }
 
 function updateUiState() {
@@ -1424,6 +1431,7 @@ updateFilter();
 updateTextStyleOutputs();
 setFill(fillColor.value);
 setBackground(backgroundColor.value);
+updateTransparency();
 if (!loadSavedDesign()) {
   loadPreset();
   commitHistory();
